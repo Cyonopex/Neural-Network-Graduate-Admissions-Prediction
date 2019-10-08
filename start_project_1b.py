@@ -15,7 +15,7 @@ learning_rate = 0.001
 epochs = 3000
 batch_size = 8
 num_neuron = 10
-seed = 3
+seed = 4
 reg_weight = 0.001
 np.random.seed(seed)
 
@@ -68,7 +68,7 @@ y = tf.matmul(H, V) + c # linear
 
 #Create the gradient descent optimizer with the given learning rate.
 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-loss = tf.reduce_mean(tf.square(d - y))
+loss = tf.reduce_mean(tf.reduce_sum(tf.square(d - y), axis=1))
 reg_loss = reg_weight * (tf.nn.l2_loss(V) + tf.nn.l2_loss(W))
 total_loss = tf.add(loss, reg_loss)
 train_op = optimizer.minimize(total_loss)
@@ -88,10 +88,10 @@ with tf.Session() as sess:
         for start, end in zip(range(0, len(trainX), batch_size), range(batch_size, len(trainX), batch_size)):
             train_op.run(feed_dict={x: trainX[start:end], d: trainY[start:end]})
             
-        tr_err = loss.eval(feed_dict={x: trainX, d: trainY})
+        tr_err = total_loss.eval(feed_dict={x: trainX, d: trainY})
         train_err.append(tr_err)
 
-        te_err = loss.eval(feed_dict={x: testX, d: testY})
+        te_err = total_loss.eval(feed_dict={x: testX, d: testY})
         test_err.append(te_err)
 
         if i % 100 == 0:
