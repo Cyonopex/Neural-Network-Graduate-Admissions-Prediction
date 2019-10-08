@@ -1,8 +1,9 @@
 #
 # Project 1, starter code part b
 #
-
+import math
 import tensorflow as tf
+tf.disable_v2_behavior()
 import numpy as np
 import pylab as plt
 
@@ -10,11 +11,12 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 NUM_FEATURES = 7
 
-learning_rate = 0.01
-epochs = 1000
+learning_rate = 0.001
+epochs = 3000
 batch_size = 8
 num_neuron = 10
-seed = 10
+seed = 3
+reg_weight = 0.001
 np.random.seed(seed)
 
 #read and divide data into test and train sets 
@@ -26,39 +28,28 @@ idx = np.arange(X_data.shape[0])
 np.random.shuffle(idx)
 X_data, Y_data = X_data[idx], Y_data[idx]
 
-# experiment with small datasets
-trainX = X_data[:100]
-trainY = Y_data[:100]
+X_data = (X_data- np.mean(X_data, axis=0))/ np.std(X_data, axis=0)
 
-#trainX = X_data[:]
-#trainY = Y_data[:]
+#split into train and test
+cutoff = math.floor(0.7 * len(X_data))
 
-trainX = (trainX- np.mean(trainX, axis=0))/ np.std(trainX, axis=0)
+trainX = np.copy(X_data[:cutoff])
+trainY = np.copy(Y_data[:cutoff])
+
+testX = np.copy(X_data[cutoff:])
+testY = np.copy(Y_data[cutoff:])
 
 # initialization routines for bias and weights
 def init_bias(n = 1):
     return(tf.Variable(np.zeros(n), dtype=tf.float32))
 
-def init_weights(n_in=1, n_out=1, logistic=True):
-    W_values = np.asarray(np.random.uniform(low=-np.sqrt(6. / (n_in + n_out)),
-                                            high=np.sqrt(6. / (n_in + n_out)),
-                                            size=(n_in, n_out)))
-    if logistic == True:
-        W_values *= 4
+def init_weights(n_in=1, n_out=1):
+    W_values = tf.random.truncated_normal((n_in, n_out), stddev=1.0/math.sqrt(n_in))
     return(tf.Variable(W_values, dtype=tf.float32))
-
-def reLu(u):
-    shape = tf.shape(u)
-    return tf.where(tf.greater(u, tf.zeros(shape)), u, tf.zeros(shape))
 
 # Create the model
 x = tf.placeholder(tf.float32, [None, NUM_FEATURES])
 d = tf.placeholder(tf.float32, [None, 1])
-
-# Build the graph for the deep net
-#weights = tf.Variable(tf.truncated_normal([NUM_FEATURES, 1], stddev=1.0 / np.sqrt(NUM_FEATURES), dtype=tf.float32), name='weights')
-#biases = tf.Variable(tf.zeros([1]), dtype=tf.float32, name='biases')
-#y = tf.matmul(x, weights) + biases
 
 # Init variables
 V = init_weights(num_neuron, 1)
@@ -70,7 +61,7 @@ b = init_bias(num_neuron)
 
 # Hidden Layer
 Z = tf.matmul(x, W) + b
-H = reLu(Z) # relu
+H = tf.nn.relu(Z)
 
 # Output Layer
 y = tf.matmul(H, V) + c # linear
@@ -78,22 +69,41 @@ y = tf.matmul(H, V) + c # linear
 #Create the gradient descent optimizer with the given learning rate.
 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 loss = tf.reduce_mean(tf.square(d - y))
-train_op = optimizer.minimize(loss)
+reg_loss = reg_weight * (tf.nn.l2_loss(V) + tf.nn.l2_loss(W))
+total_loss = tf.add(loss, reg_loss)
+train_op = optimizer.minimize(total_loss)
 
 with tf.Session() as sess:
-	sess.run(tf.global_variables_initializer())
-	train_err = []
-	for i in range(epochs):
-		train_op.run(feed_dict={x: trainX, d: trainY})
-		err = loss.eval(feed_dict={x: trainX, d: trainY})
-		train_err.append(err)
+    sess.run(tf.global_variables_initializer())
+    train_err = []
+    test_err = []
+    idx = np.arange(trainX.shape[0])
 
-		if i % 100 == 0:
-			print('iter %d: train error %g'%(i, train_err[i]))
+    for i in range(epochs):
+        
+        # Shuffle at every epoch
+        np.random.shuffle(idx)
+        trainX, trainY = trainX[idx], trainY[idx]
+
+        for start, end in zip(range(0, len(trainX), batch_size), range(batch_size, len(trainX), batch_size)):
+            train_op.run(feed_dict={x: trainX[start:end], d: trainY[start:end]})
+            
+        tr_err = loss.eval(feed_dict={x: trainX, d: trainY})
+        train_err.append(tr_err)
+
+        te_err = loss.eval(feed_dict={x: testX, d: testY})
+        test_err.append(te_err)
+
+        if i % 100 == 0:
+            print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
 
 # plot learning curves
 plt.figure(1)
-plt.plot(range(epochs), train_err)
+plt.plot(range(epochs), train_err, label = 'train error')
+plt.plot(range(epochs), test_err, label = 'test error')
 plt.xlabel(str(epochs) + ' iterations')
-plt.ylabel('Train Error')
+plt.ylabel('Mean Square Error')
+plt.title('Regression')
+plt.ylim(0,0.05)
+plt.legend()
 plt.show()
