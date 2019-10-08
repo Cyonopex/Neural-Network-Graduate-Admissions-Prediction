@@ -13,7 +13,7 @@ NUM_FEATURES = 7
 learning_rate = 0.01
 epochs = 1000
 batch_size = 8
-num_neuron = 30
+num_neuron = 10
 seed = 10
 np.random.seed(seed)
 
@@ -29,6 +29,9 @@ X_data, Y_data = X_data[idx], Y_data[idx]
 # experiment with small datasets
 trainX = X_data[:100]
 trainY = Y_data[:100]
+
+#trainX = X_data[:]
+#trainY = Y_data[:]
 
 trainX = (trainX- np.mean(trainX, axis=0))/ np.std(trainX, axis=0)
 
