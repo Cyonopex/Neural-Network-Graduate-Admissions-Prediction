@@ -12,10 +12,10 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 7
 
 learning_rate = 0.001
-epochs = 3000
+epochs = 50000
 batch_size = 8
 num_neuron = 10
-seed = 4
+seed = 9
 reg_weight = 0.001
 np.random.seed(seed)
 
@@ -67,11 +67,13 @@ H = tf.nn.relu(Z)
 y = tf.matmul(H, V) + c # linear
 
 #Create the gradient descent optimizer with the given learning rate.
+mse = tf.reduce_mean(tf.square(d - y))
+
+regularisation = tf.nn.l2_loss(V) + tf.nn.l2_loss(W)
+loss = mse + reg_weight * regularisation
+
 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-loss = tf.reduce_mean(tf.reduce_sum(tf.square(d - y), axis=1))
-reg_loss = reg_weight * (tf.nn.l2_loss(V) + tf.nn.l2_loss(W))
-total_loss = tf.add(loss, reg_loss)
-train_op = optimizer.minimize(total_loss)
+train_op = optimizer.minimize(loss)
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -86,12 +88,13 @@ with tf.Session() as sess:
         trainX, trainY = trainX[idx], trainY[idx]
 
         for start, end in zip(range(0, len(trainX), batch_size), range(batch_size, len(trainX), batch_size)):
+
             train_op.run(feed_dict={x: trainX[start:end], d: trainY[start:end]})
             
-        tr_err = total_loss.eval(feed_dict={x: trainX, d: trainY})
+        tr_err = loss.eval(feed_dict={x: trainX, d: trainY})
         train_err.append(tr_err)
 
-        te_err = total_loss.eval(feed_dict={x: testX, d: testY})
+        te_err = loss.eval(feed_dict={x: testX, d: testY})
         test_err.append(te_err)
 
         if i % 100 == 0:
@@ -104,6 +107,6 @@ plt.plot(range(epochs), test_err, label = 'test error')
 plt.xlabel(str(epochs) + ' iterations')
 plt.ylabel('Mean Square Error')
 plt.title('Regression')
-plt.ylim(0,0.05)
+#plt.ylim(0,0.03)
 plt.legend()
 plt.show()
