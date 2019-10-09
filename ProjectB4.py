@@ -13,7 +13,7 @@ NUM_FEATURES = 7
 
 learning_rate = 0.001
 epochs = 10000
-batch_size = 32
+batch_size = 8
 num_neuron = 10
 seed = 10
 reg_weight = 0.001
