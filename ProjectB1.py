@@ -12,11 +12,12 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 7
 
 learning_rate = 0.001
-epochs = 10000
+epochs = 1000
 batch_size = 8
 num_neuron = 10
 seed = 10
 reg_weight = 0.001
+stopping_epoch = 300
 np.random.seed(seed)
 
 #read and divide data into test and train sets 
@@ -78,8 +79,11 @@ train_op = optimizer.minimize(loss)
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     train_err = []
+    log_train_err = []
     test_err = []
+    log_test_err = []
     idx = np.arange(trainX.shape[0])
+    V_, c_, W_, b_ = 0,0,0,0
 
     for i in range(epochs):
         
@@ -88,20 +92,43 @@ with tf.Session() as sess:
         trainX, trainY = trainX[idx], trainY[idx]
 
         for start, end in zip(range(0, len(trainX), batch_size), range(batch_size, len(trainX), batch_size)):
-
             train_op.run(feed_dict={x: trainX[start:end], d: trainY[start:end]})
-            
+        
+        if i == stopping_epoch: # at the selected epoch, store all weights for future computation
+            V_, c_, W_, b_ = sess.run([V, c, W, b])
+
         tr_err = loss.eval(feed_dict={x: trainX, d: trainY})
         train_err.append(tr_err)
+        log_train_err.append(math.log10(tr_err))
 
         te_err = loss.eval(feed_dict={x: testX, d: testY})
         test_err.append(te_err)
+        log_test_err.append(math.log10(te_err))
 
         if i % 100 == 0:
             print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
 
+    # load weights from selected epoch
+
+    V.load(V_, sess)
+    W.load(W_, sess)
+    b.load(b_, sess)
+    c.load(c_, sess)
+
+    # Shuffle test samples and test 50 of them
+    idxtest = np.arange(testX.shape[0])
+    np.random.shuffle(idxtest)
+    testX, testY = testX[idxtest], testY[idxtest]
+    sub_testX = testX[:50]
+    sub_testY = testY[:50]
+
+    y = sess.run([y], feed_dict={x: sub_testX, d: sub_testY})
+
+    print(y)
+
+
 # plot learning curves
-plt.figure(1)
+f1 = plt.figure(1)
 plt.plot(range(epochs), train_err, label = 'train error')
 plt.plot(range(epochs), test_err, label = 'test error')
 plt.xlabel(str(epochs) + ' iterations')
@@ -109,4 +136,5 @@ plt.ylabel('Mean Square Error')
 plt.title('Regression')
 plt.ylim(0,0.03)
 plt.legend()
+
 plt.show()
