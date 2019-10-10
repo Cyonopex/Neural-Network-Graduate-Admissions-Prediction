@@ -12,13 +12,14 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 7
 
 learning_rate = 0.001
-epochs = 100
+epochs = 80000
 batch_size = 8
 num_neuron = 10
 seed = 10
 reg_weight = 0.001
-stopping_epoch = 50
+stopping_epoch = 24000
 np.random.seed(seed)
+tf.set_random_seed(seed)
 
 #read and divide data into test and train sets 
 admit_data = np.genfromtxt('admission_predict.csv', delimiter= ',')
@@ -85,6 +86,7 @@ with tf.Session() as sess:
     idx = np.arange(trainX.shape[0])
     V_, c_, W_, b_ = 0,0,0,0
 
+    # LEARN WEIGHTS
     for i in range(epochs):
         
         # Shuffle at every epoch
@@ -108,8 +110,9 @@ with tf.Session() as sess:
         if i % 100 == 0:
             print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
 
-    # load weights from selected epoch
+    # APPLY SAMPLE DATA
 
+    # load weights from selected epoch
     V.load(V_, sess)
     W.load(W_, sess)
     b.load(b_, sess)
@@ -126,7 +129,7 @@ with tf.Session() as sess:
     #print(sub_testY)
 
     idxsort = np.argsort([i[0] for i in sub_testY])
-    print(idxsort)
+    sub_testX, sub_testY = sub_testX[idxsort], sub_testY[idxsort]
 
     y = sess.run([y], feed_dict={x: sub_testX})
 
@@ -134,12 +137,13 @@ with tf.Session() as sess:
 
 
 # plot learning curves
+#with plt.xkcd():
 f1 = plt.figure(1)
 plt.plot(range(epochs), train_err, label = 'train error')
 plt.plot(range(epochs), test_err, label = 'test error')
 plt.xlabel(str(epochs) + ' iterations')
 plt.ylabel('Mean Square Error')
-plt.title('Regression')
+plt.title('Training and Testing errors against Epochs')
 plt.ylim(0,0.03)
 plt.legend()
 
@@ -149,5 +153,9 @@ d1 = [i[0] for i in sub_testY]
 
 plt.scatter(range(50), y1, label = "Predicted Values")
 plt.scatter(range(50), d1, label = "Actual values")
+plt.title('Scatterplot of Predicted vs Target values')
+plt.xlabel('50 random data samples, sorted')
+plt.ylabel('Probability of admission')
+plt.legend()
 
 plt.show()
