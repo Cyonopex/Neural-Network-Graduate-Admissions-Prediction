@@ -118,26 +118,20 @@ with tf.Session() as sess:
     b.load(b_, sess)
     c.load(c_, sess)
 
-    # Shuffle test samples and test 50 of them
+    # Shuffle test samples and sample 50 of them
     idxtest = np.arange(testX.shape[0])
     np.random.shuffle(idxtest)
     testX, testY = testX[idxtest], testY[idxtest]
     sub_testX = testX[:50]
     sub_testY = testY[:50]
 
-    #print(sub_testX)
-    #print(sub_testY)
-
+    # Sort the 50 samples for visual aesthetic sake
     idxsort = np.argsort([i[0] for i in sub_testY])
     sub_testX, sub_testY = sub_testX[idxsort], sub_testY[idxsort]
 
     y = sess.run([y], feed_dict={x: sub_testX})
 
-    #print(type(y))
-
-
 # plot learning curves
-#with plt.xkcd():
 f1 = plt.figure(1)
 plt.plot(range(epochs), train_err, label = 'train error')
 plt.plot(range(epochs), test_err, label = 'test error')
