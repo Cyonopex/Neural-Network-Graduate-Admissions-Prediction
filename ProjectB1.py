@@ -12,12 +12,12 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 7
 
 learning_rate = 0.001
-epochs = 1000
+epochs = 100
 batch_size = 8
 num_neuron = 10
 seed = 10
 reg_weight = 0.001
-stopping_epoch = 300
+stopping_epoch = 50
 np.random.seed(seed)
 
 #read and divide data into test and train sets 
@@ -122,9 +122,9 @@ with tf.Session() as sess:
     sub_testX = testX[:50]
     sub_testY = testY[:50]
 
-    y = sess.run([y], feed_dict={x: sub_testX, d: sub_testY})
+    y = sess.run([y], feed_dict={x: sub_testX})
 
-    print(y)
+    #print(type(y))
 
 
 # plot learning curves
@@ -136,5 +136,12 @@ plt.ylabel('Mean Square Error')
 plt.title('Regression')
 plt.ylim(0,0.03)
 plt.legend()
+
+f2 = plt.figure(2)
+y1 = [i[0] for i in y[0]]
+d1 = [i[0] for i in sub_testY]
+
+plt.scatter(range(50), y1, label = "Predicted Values")
+plt.scatter(range(50), d1, label = "Actual values")
 
 plt.show()
