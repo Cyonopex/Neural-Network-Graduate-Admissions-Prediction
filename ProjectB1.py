@@ -80,9 +80,7 @@ train_op = optimizer.minimize(loss)
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     train_err = []
-    log_train_err = []
     test_err = []
-    log_test_err = []
     idx = np.arange(trainX.shape[0])
     V_, c_, W_, b_ = 0,0,0,0
 
@@ -101,11 +99,9 @@ with tf.Session() as sess:
 
         tr_err = loss.eval(feed_dict={x: trainX, d: trainY})
         train_err.append(tr_err)
-        log_train_err.append(math.log10(tr_err))
 
         te_err = loss.eval(feed_dict={x: testX, d: testY})
         test_err.append(te_err)
-        log_test_err.append(math.log10(te_err))
 
         if i % 100 == 0:
             print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
