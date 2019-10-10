@@ -12,10 +12,10 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 6
 
 learning_rate = 0.001
-epochs = 20000
+epochs = 100
 batch_size = 8
 num_neuron = 10
-seed = 11
+seed = 15
 reg_weight = 0.001
 np.random.seed(seed)
 tf.set_random_seed(seed+5)
@@ -86,12 +86,14 @@ def main():
     total_test_errs = []
 
     # Remove each feature iteratively
-    for i in range(7):
-        trainX = np.delete(trainXfull, i, 1)
-        testX = np.delete(testXfull, i, 1)
+    for j in range(7):
+        trainX = np.delete(trainXfull, j, 1)
+        testX = np.delete(testXfull, j, 1)
+
 
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+            tf.set_random_seed(seed+5)
+            tf.global_variables_initializer().run()
             train_err = []
             test_err = []
             idx = np.arange(trainX.shape[0])
@@ -100,20 +102,18 @@ def main():
             for i in range(epochs):
                 
                 # Shuffle at every epoch
-                np.random.shuffle(idx)
+                tf.random.shuffle(idx)
                 trainX, trainY = trainX[idx], trainY[idx]
+                
 
                 for start, end in zip(range(0, len(trainX), batch_size), range(batch_size, len(trainX), batch_size)):
-                    train_op.run(feed_dict={x: trainX[start:end], d: trainY[start:end]})
-                
-                #if i == stopping_epoch: # at the selected epoch, store all weights for future computation
-                #    V_, c_, W_, b_ = sess.run([V, c, W, b])
+                    sess.run([train_op], feed_dict={x: trainX[start:end], d: trainY[start:end]})
 
-                tr_err = loss.eval(feed_dict={x: trainX, d: trainY})
-                train_err.append(tr_err)
+                tr_err = sess.run([loss], feed_dict={x: trainX, d: trainY})
+                train_err.append(tr_err[0])
 
-                te_err = loss.eval(feed_dict={x: testX, d: testY})
-                test_err.append(te_err)
+                te_err = sess.run([loss], feed_dict={x: testX, d: testY})
+                test_err.append(te_err[0])
 
                 if i % 100 == 0:
                     print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
