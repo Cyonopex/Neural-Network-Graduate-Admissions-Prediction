@@ -122,6 +122,12 @@ with tf.Session() as sess:
     sub_testX = testX[:50]
     sub_testY = testY[:50]
 
+    #print(sub_testX)
+    #print(sub_testY)
+
+    idxsort = np.argsort([i[0] for i in sub_testY])
+    print(idxsort)
+
     y = sess.run([y], feed_dict={x: sub_testX})
 
     #print(type(y))
