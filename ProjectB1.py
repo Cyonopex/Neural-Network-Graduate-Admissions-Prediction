@@ -12,14 +12,14 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 7
 
 learning_rate = 0.001
-epochs = 80000
+epochs = 100000
 batch_size = 8
 num_neuron = 10
 seed = 10
 reg_weight = 0.001
-stopping_epoch = 24000
+stopping_epoch = 45000
 np.random.seed(seed)
-tf.set_random_seed(seed)
+tf.set_random_seed(seed+5)
 
 #read and divide data into test and train sets 
 admit_data = np.genfromtxt('admission_predict.csv', delimiter= ',')
