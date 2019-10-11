@@ -9,7 +9,7 @@ import pylab as plt
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-NUM_FEATURES = 5
+#NUM_FEATURES = 6
 
 learning_rate = 0.001
 epochs = 50000
@@ -28,7 +28,7 @@ def init_weights(n_in=1, n_out=1):
     W_values = tf.random.truncated_normal((n_in, n_out), stddev=1.0/math.sqrt(n_in))
     return(tf.Variable(W_values, dtype=tf.float32))
 
-def ffn(x):
+def ffn(x, NUM_FEATURES):
     with tf.name_scope('hidden'):
 
         # Hidden Layer
@@ -45,6 +45,23 @@ def ffn(x):
         y = tf.matmul(H, V) + c # linear
 
     return y, V, c, W, b
+
+def prepare_graph(NUM_FEATURES):
+    # Create the model
+    x = tf.placeholder(tf.float32, [None, NUM_FEATURES])
+    d = tf.placeholder(tf.float32, [None, 1])
+
+    y, V, c, W, b = ffn(x, NUM_FEATURES)
+
+    #Create the gradient descent optimizer with the given learning rate.
+    mse = tf.reduce_mean(tf.square(d - y))
+
+    regularisation = tf.nn.l2_loss(V) + tf.nn.l2_loss(W)
+    loss = mse + reg_weight * regularisation
+
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    train_op = optimizer.minimize(loss)
+    return train_op, loss, x, d
 
 def main():
     #read and divide data into test and train sets 
@@ -67,35 +84,38 @@ def main():
     testXfull = np.copy(X_data[cutoff:])
     testYfull = np.copy(Y_data[cutoff:])
 
-    # Create the model
-    x = tf.placeholder(tf.float32, [None, NUM_FEATURES])
-    d = tf.placeholder(tf.float32, [None, 1])
-
-    y, V, c, W, b = ffn(x)
-
-    #Create the gradient descent optimizer with the given learning rate.
-    mse = tf.reduce_mean(tf.square(d - y))
-
-    regularisation = tf.nn.l2_loss(V) + tf.nn.l2_loss(W)
-    loss = mse + reg_weight * regularisation
-
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    train_op = optimizer.minimize(loss)
-
+    # All 7 features
     total_train_errs = []
     total_test_errs = []
 
-    trainXfull = np.delete(trainXfull, 1, 1)
-    testXfull = np.delete(testXfull, 1, 1)
+    trainX = np.copy(trainXfull)
+    trainY = np.copy(trainYfull)
+    testX = np.copy(testXfull)
+    testY = np.copy(testYfull)
+    
+    train_op, loss, x, d = prepare_graph(7)
 
-    # Remove each feature iteratively
-    for j in range(6):
-        trainX = np.delete(trainXfull, j, 1)
-        testX = np.delete(testXfull, j, 1)
-        trainY = np.copy(trainYfull)
-        testY = np.copy(testYfull)
+    for i, num_features in zip(range(3), [7,6,5]):
+
         np.random.seed(3)
+
+        trainX = np.copy(trainXfull)
+        trainY = np.copy(trainYfull)
+        testX = np.copy(testXfull)
+        testY = np.copy(testYfull)
+
+        if num_features < 7:
+            # remove column 2
+            trainX = np.delete(trainX, 1, 1)
+            testX = np.delete(testX, 1, 1)
+
+        if num_features < 6:
+            # remove column 7
+            trainX = np.delete(trainX, 5, 1)
+            testX = np.delete(testX, 5, 1)
         
+        train_op, loss, x, d = prepare_graph(num_features)
+
         with tf.Session() as sess:
             tf.set_random_seed(seed+5)
             tf.global_variables_initializer().run()
@@ -131,9 +151,10 @@ def main():
 
     # plot learning curves
     f1 = plt.figure(1)
-    color_training = ['#ff0000', '#00ffff', '#ffff00', '#00ff00', '#ff00ff', '#ff7700', '#0000ff'] # Rainbow colours
-    for train_errs, idx, color_train in zip(total_train_errs, range(len(total_train_errs)), color_training):
-        plt.plot(range(epochs), train_errs, label = 'train error without col ' + str(idx + 1), color=color_train)
+
+    plt.plot(range(epochs), total_train_errs[0], label = '7 features')
+    plt.plot(range(epochs), total_train_errs[1], label = '6 features')
+    plt.plot(range(epochs), total_train_errs[2], label = '5 features')
 
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
@@ -143,11 +164,9 @@ def main():
 
     f2 = plt.figure(2)
 
-    for test_errs, idx, color_train in zip(total_test_errs, range(len(total_test_errs)), color_training):
-        newidx = idx
-        if idx >= 1: # Offset counter for more accurate column naming
-            newidx += 1
-        plt.plot(range(epochs), test_errs, label = 'test error without col ' + str(newidx + 1), color=color_train)
+    plt.plot(range(epochs), total_test_errs[0], label = '7 features')
+    plt.plot(range(epochs), total_test_errs[1], label = '6 features')
+    plt.plot(range(epochs), total_test_errs[2], label = '5 features')
 
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')

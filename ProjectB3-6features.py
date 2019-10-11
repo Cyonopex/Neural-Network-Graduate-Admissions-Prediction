@@ -12,10 +12,10 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 6
 
 learning_rate = 0.001
-epochs = 10000
+epochs = 5000
 batch_size = 8
 num_neuron = 10
-seed = 15
+seed = 10
 reg_weight = 0.001
 np.random.seed(seed)
 tf.set_random_seed(seed+5)
@@ -62,10 +62,10 @@ def main():
     cutoff = math.floor(0.7 * len(X_data))
 
     trainXfull = np.copy(X_data[:cutoff])
-    trainY = np.copy(Y_data[:cutoff])
+    trainYfull = np.copy(Y_data[:cutoff])
 
     testXfull = np.copy(X_data[cutoff:])
-    testY = np.copy(Y_data[cutoff:])
+    testYfull = np.copy(Y_data[cutoff:])
 
     # Create the model
     x = tf.placeholder(tf.float32, [None, NUM_FEATURES])
@@ -89,8 +89,10 @@ def main():
     for j in range(7):
         trainX = np.delete(trainXfull, j, 1)
         testX = np.delete(testXfull, j, 1)
-
-
+        trainY = np.copy(trainYfull)
+        testY = np.copy(testYfull)
+        np.random.seed(3)
+        
         with tf.Session() as sess:
             tf.set_random_seed(seed+5)
             tf.global_variables_initializer().run()
@@ -102,9 +104,9 @@ def main():
             for i in range(epochs):
                 
                 # Shuffle at every epoch
-                tf.random.shuffle(idx)
+                np.random.shuffle(idx)
                 trainX, trainY = trainX[idx], trainY[idx]
-                
+
 
                 for start, end in zip(range(0, len(trainX), batch_size), range(batch_size, len(trainX), batch_size)):
                     sess.run([train_op], feed_dict={x: trainX[start:end], d: trainY[start:end]})
@@ -133,7 +135,7 @@ def main():
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
     plt.title('Training errors against Epochs - RFE')
-    plt.ylim(0,0.025)
+    plt.ylim(0,0.015)
     plt.legend()
 
     f2 = plt.figure(2)
@@ -144,7 +146,7 @@ def main():
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
     plt.title('Test errors against Epochs - RFE')
-    plt.ylim(0,0.025)
+    plt.ylim(0,0.015)
     plt.legend()
 
 
