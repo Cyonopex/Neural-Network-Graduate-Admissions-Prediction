@@ -12,10 +12,10 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 5
 
 learning_rate = 0.001
-epochs = 1000
+epochs = 10000
 batch_size = 8
 num_neuron = 10
-seed = 11
+seed = 15
 reg_weight = 0.001
 np.random.seed(seed)
 tf.set_random_seed(seed+5)
@@ -85,17 +85,19 @@ def main():
     total_train_errs = []
     total_test_errs = []
 
-    # Remove first feature
-    trainXfull = np.delete(trainXfull, 0, 1)
-    testXfull = np.delete(testXfull, 0, 1)
+    #remove feature 7 for recursive feature elimination
+    trainXfull = np.delete(trainXfull, 6, 1)
+    testXfull = np.delete(testXfull, 6, 1)
 
     # Remove each feature iteratively
-    for i in range(6):
-        trainX = np.delete(trainXfull, i, 1)
-        testX = np.delete(testXfull, i, 1)
+    for j in range(6):
+        trainX = np.delete(trainXfull, j, 1)
+        testX = np.delete(testXfull, j, 1)
+
 
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+            tf.set_random_seed(seed+5)
+            tf.global_variables_initializer().run()
             train_err = []
             test_err = []
             idx = np.arange(trainX.shape[0])
@@ -104,20 +106,18 @@ def main():
             for i in range(epochs):
                 
                 # Shuffle at every epoch
-                np.random.shuffle(idx)
+                tf.random.shuffle(idx)
                 trainX, trainY = trainX[idx], trainY[idx]
+                
 
                 for start, end in zip(range(0, len(trainX), batch_size), range(batch_size, len(trainX), batch_size)):
-                    train_op.run(feed_dict={x: trainX[start:end], d: trainY[start:end]})
-                
-                #if i == stopping_epoch: # at the selected epoch, store all weights for future computation
-                #    V_, c_, W_, b_ = sess.run([V, c, W, b])
+                    sess.run([train_op], feed_dict={x: trainX[start:end], d: trainY[start:end]})
 
-                tr_err = loss.eval(feed_dict={x: trainX, d: trainY})
-                train_err.append(tr_err)
+                tr_err = sess.run([loss], feed_dict={x: trainX, d: trainY})
+                train_err.append(tr_err[0])
 
-                te_err = loss.eval(feed_dict={x: testX, d: testY})
-                test_err.append(te_err)
+                te_err = sess.run([loss], feed_dict={x: testX, d: testY})
+                test_err.append(te_err[0])
 
                 if i % 100 == 0:
                     print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
@@ -130,16 +130,25 @@ def main():
 
     # plot learning curves
     f1 = plt.figure(1)
-    color_training = ['#ff0000', '#00ffff', '#ffff00', '#00ff00', '#ff00ff', '#0000ff'] # Rainbow colours? I wanted each pair of train/test to match
-    color_testing = ['#ff6060', '#60ffff', '#ffff60', '#60ff60', '#ff60ff', '#6060ff'] # Lighter variants of rainbow colours
-    for train_errs, test_errs, idx, color_train, color_test in zip(total_train_errs, total_test_errs, range(len(total_train_errs)), color_training, color_testing):
-        plt.plot(range(epochs), train_errs, label = 'train error without col ' + str(idx + 2), color=color_train)
-        plt.plot(range(epochs), test_errs, label = 'test error without col ' + str(idx + 2), color=color_test)
+    color_training = ['#ff0000', '#00ffff', '#ffff00', '#00ff00', '#ff00ff', '#ff7700', '#0000ff'] # Rainbow colours
+    for train_errs, idx, color_train in zip(total_train_errs, range(len(total_train_errs)), color_training):
+        plt.plot(range(epochs), train_errs, label = 'train error without col ' + str(idx + 1), color=color_train)
 
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
-    plt.title('Training and Testing errors against Epochs, without col 1')
-    plt.ylim(0,0.04)
+    plt.title('Training errors against Epochs - RFE')
+    plt.ylim(0,0.025)
+    plt.legend()
+
+    f2 = plt.figure(2)
+
+    for test_errs, idx, color_train in zip(total_test_errs, range(len(total_test_errs)), color_training):
+        plt.plot(range(epochs), test_errs, label = 'test error without col ' + str(idx + 1), color=color_train)
+
+    plt.xlabel(str(epochs) + ' iterations')
+    plt.ylabel('Mean Square Error')
+    plt.title('Test errors against Epochs - RFE')
+    plt.ylim(0,0.025)
     plt.legend()
 
 

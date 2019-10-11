@@ -12,7 +12,7 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 6
 
 learning_rate = 0.001
-epochs = 100
+epochs = 10000
 batch_size = 8
 num_neuron = 10
 seed = 15
@@ -126,16 +126,25 @@ def main():
 
     # plot learning curves
     f1 = plt.figure(1)
-    color_training = ['#ff0000', '#00ffff', '#ffff00', '#00ff00', '#ff00ff', '#ff7700', '#0000ff'] # Rainbow colours? I wanted each pair of train/test to match
-    color_testing = ['#ff6060', '#60ffff', '#ffff60', '#60ff60', '#ff60ff', '#ffbb80', '#6060ff'] # Lighter variants of rainbow colours
-    for train_errs, test_errs, idx, color_train, color_test in zip(total_train_errs, total_test_errs, range(len(total_train_errs)), color_training, color_testing):
+    color_training = ['#ff0000', '#00ffff', '#ffff00', '#00ff00', '#ff00ff', '#ff7700', '#0000ff'] # Rainbow colours
+    for train_errs, idx, color_train in zip(total_train_errs, range(len(total_train_errs)), color_training):
         plt.plot(range(epochs), train_errs, label = 'train error without col ' + str(idx + 1), color=color_train)
-        plt.plot(range(epochs), test_errs, label = 'test error without col ' + str(idx + 1), color=color_test)
 
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
-    plt.title('Training and Testing errors against Epochs')
-    plt.ylim(0,0.04)
+    plt.title('Training errors against Epochs - RFE')
+    plt.ylim(0,0.025)
+    plt.legend()
+
+    f2 = plt.figure(2)
+
+    for test_errs, idx, color_train in zip(total_test_errs, range(len(total_test_errs)), color_training):
+        plt.plot(range(epochs), test_errs, label = 'test error without col ' + str(idx + 1), color=color_train)
+
+    plt.xlabel(str(epochs) + ' iterations')
+    plt.ylabel('Mean Square Error')
+    plt.title('Test errors against Epochs - RFE')
+    plt.ylim(0,0.025)
     plt.legend()
 
 
