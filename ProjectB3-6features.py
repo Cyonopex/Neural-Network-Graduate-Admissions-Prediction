@@ -6,6 +6,7 @@ import tensorflow as tf
 tf.disable_v2_behavior()
 import numpy as np
 import pylab as plt
+from tqdm import tqdm
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -101,7 +102,7 @@ def main():
             idx = np.arange(trainX.shape[0])
 
             # LEARN WEIGHTS
-            for i in range(epochs):
+            for i in tqdm(range(epochs)):
                 
                 # Shuffle at every epoch
                 np.random.shuffle(idx)
@@ -117,13 +118,12 @@ def main():
                 te_err = sess.run([loss], feed_dict={x: testX, d: testY})
                 test_err.append(te_err[0])
 
-                if i % 100 == 0:
-                    print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
+                #if i % 100 == 0:
+                    #print('iter %d: train error %g test error %g'%(i, train_err[i], test_err[i]))
 
             # Store all train/test errors
             total_train_errs.append(train_err)
             total_test_errs.append(test_err)
-
 
 
     # plot learning curves
