@@ -240,7 +240,7 @@ def main():
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
     plt.title('Training errors against Epochs - (5 vs 6 vs 7 layer) with/without dropouts')
-    plt.ylim(0,0.010)
+    plt.ylim(0.002,0.008)
     plt.legend()
 
     f2 = plt.figure(2)
@@ -251,7 +251,7 @@ def main():
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
     plt.title('Test errors against Epochs - (5 vs 6 vs 7 layer) with/without dropouts')
-    plt.ylim(0,0.010)
+    plt.ylim(0.002,0.008)
     plt.legend()
 
 

@@ -13,7 +13,7 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 6
 
 learning_rate = 0.001
-epochs = 5000
+epochs = 50000
 batch_size = 8
 num_neuron = 10
 seed = 10
