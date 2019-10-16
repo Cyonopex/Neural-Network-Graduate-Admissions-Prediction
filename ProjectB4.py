@@ -13,7 +13,7 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 NUM_FEATURES = 5
 
 learning_rate = 0.001
-epochs = 80000
+epochs = 100000
 batch_size = 8
 num_neuron = 10
 num_neuron_4_layer = 50
@@ -232,7 +232,6 @@ def main():
     # Parse results
     train_err, test_err = zip(*results)
 
-    # plot learning curves
     f1 = plt.figure(1)
 
     for err, label in zip(train_err, legend):
@@ -252,7 +251,7 @@ def main():
     plt.xlabel(str(epochs) + ' iterations')
     plt.ylabel('Mean Square Error')
     plt.title('Test errors against Epochs - (5 vs 6 vs 7 layer) with/without dropouts')
-    plt.ylim(0,0.0010)
+    plt.ylim(0,0.010)
     plt.legend()
 
 
